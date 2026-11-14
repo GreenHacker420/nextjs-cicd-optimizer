@@ -1,0 +1,29 @@
+name: Lint & Validate Templates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate plugin.json
+        run: |
+          jq . plugin.json > /dev/null
+          echo "plugin.json is valid JSON."
+
+      - name: Check required files exist
+        run: |
+          test -f skills/nextjs-cicd-optimizer/SKILL.md
+          test -f templates/Dockerfile
+          test -f templates/.dockerignore
+          test -f templates/deploy-nextjs.yml
+          test -f assets/logo.svg
+          test -f LICENSE
+          echo "All required skill files present."

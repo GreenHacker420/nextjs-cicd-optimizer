@@ -1,0 +1,9 @@
+{
+  "name": "nextjs-cicd-optimizer",
+  "description": "Production Next.js CI/CD and Docker build speed optimizer for Antigravity & AI coding agents",
+  "version": "1.0.0",
+  "author": {
+    "name": "GreenHacker",
+    "url": "https://github.com/GreenHacker420"
+  }
+}

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" fill="none">
+  <defs>
+    <linearGradient id="bg-grad" x1="28" y1="28" x2="228" y2="228" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="cyan-bolt" x1="90" y1="60" x2="166" y2="196" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+    <linearGradient id="ring-grad" x1="40" y1="40" x2="216" y2="216" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+    <linearGradient id="next-n" x1="70" y1="80" x2="186" y2="176" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Rounded Container (with ~10% margin) -->
+  <rect x="24" y="24" width="208" height="208" rx="48" fill="url(#bg-grad)" stroke="url(#ring-grad)" stroke-width="4" stroke-opacity="0.8" />
+
+  <!-- Subtle CI/CD Pipeline Infinite Orbit Glow -->
+  <circle cx="128" cy="128" r="76" stroke="url(#ring-grad)" stroke-width="3" stroke-dasharray="16 8" stroke-opacity="0.4" />
+
+  <!-- Next.js Stylized "N" Path -->
+  <path d="M 88 84 L 88 172" stroke="url(#next-n)" stroke-width="12" stroke-linecap="round" />
+  <path d="M 88 88 L 160 172" stroke="url(#next-n)" stroke-width="11" stroke-linecap="round" opacity="0.9" />
+  <path d="M 160 84 L 160 120" stroke="url(#next-n)" stroke-width="12" stroke-linecap="round" />
+
+  <!-- Fast Forward / Rocket Lightning Bolt Overlay with Glow -->
+  <g filter="url(#glow)">
+    <polygon points="144,56 106,128 138,128 112,200 172,116 138,116" fill="url(#cyan-bolt)" />
+    <polygon points="144,56 106,128 138,128 112,200 172,116 138,116" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.7" fill="none" />
+  </g>
+
+  <!-- CI/CD Status Indicator Dots -->
+  <circle cx="68" cy="188" r="6" fill="#10b981" />
+  <circle cx="68" cy="188" r="10" stroke="#10b981" stroke-width="2" stroke-opacity="0.5" />
+
+  <circle cx="188" cy="68" r="6" fill="#38bdf8" />
+  <circle cx="188" cy="68" r="10" stroke="#38bdf8" stroke-width="2" stroke-opacity="0.5" />
+</svg>
