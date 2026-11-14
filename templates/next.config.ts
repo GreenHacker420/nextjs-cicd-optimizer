@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
   // React Strict Mode for predictable hydration
   reactStrictMode: true,
 
+  // Next.js 16 + React 19 Compiler support
+  experimental: {
+    reactCompiler: true,
+  },
+
   // Optimize production image caching
   images: {
     formats: ["image/avif", "image/webp"],

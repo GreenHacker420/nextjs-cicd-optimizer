@@ -1,8 +1,8 @@
 {
   "name": "nextjs-cicd-optimizer",
-  "displayName": "Next.js CI/CD Speed Optimizer",
-  "description": "Accelerate Next.js Docker builds and CI/CD pipelines from 6+ minutes to under 90 seconds with BuildKit caching, GHCR registry layer cache, stripped runtime tooling, and zero-downtime rollouts.",
-  "version": "1.0.0",
+  "displayName": "Next.js 16 CI/CD Speed Optimizer",
+  "description": "Accelerate Next.js 16 & 15 Docker builds and CI/CD pipelines from 6+ minutes to under 90 seconds with Turbopack caching, BuildKit cache mounts, GHCR registry layer cache, and zero-downtime rollouts.",
+  "version": "1.1.0",
   "author": {
     "name": "GreenHacker",
     "url": "https://github.com/GreenHacker420"
@@ -13,6 +13,9 @@
   "license": "MIT",
   "keywords": [
     "nextjs",
+    "nextjs-16",
+    "turbopack",
+    "react-19",
     "cicd",
     "docker",
     "buildkit",
@@ -23,8 +26,8 @@
     "antigravity-skill"
   ],
   "suggestedPrompts": [
-    "Audit and optimize my Next.js Dockerfile and GitHub Actions workflow for sub-90s builds",
-    "Configure Docker Buildx registry layer caching and BuildKit cache mounts for Next.js",
+    "Audit and optimize my Next.js 16 Turbopack Dockerfile and GitHub Actions workflow for sub-90s builds",
+    "Configure Docker Buildx registry layer caching and Turbopack disk cache mounts for Next.js 16",
     "Implement safe zero-downtime rollouts and lightweight busybox health checks on low-RAM VMs"
   ]
 }

@@ -1,19 +1,19 @@
 ---
 name: nextjs-cicd-optimizer
-description: Optimizes Next.js CI/CD pipelines, Docker container builds, and deployment workflows to achieve under 90-second build and release cycles. Applies BuildKit cache mounts, GHCR registry layer caching, standalone output packaging, lightweight zero-node health checks, and swap-safe zero-downtime container rollouts.
+description: Optimizes Next.js 16 & 15 CI/CD pipelines, Docker container builds, and deployment workflows to achieve under 90-second build and release cycles. Applies Turbopack disk caching, BuildKit cache mounts, GHCR registry layer caching, standalone output packaging, lightweight zero-node health checks, and swap-safe zero-downtime container rollouts.
 ---
 
-# Next.js CI/CD Speed & Docker Build Optimizer
+# Next.js 16 & 15 CI/CD Speed & Docker Build Optimizer
 
-A comprehensive agent guide and production standard for slashing Next.js CI/CD build and deployment times from **6–10 minutes down to under 90 seconds** while ensuring 100% stability on resource-constrained host instances (1GB–2GB RAM / 1–2 vCPUs).
+A comprehensive agent guide and production standard for slashing Next.js 16 and 15 CI/CD build and deployment times from **6–10 minutes down to under 90 seconds** while ensuring 100% stability on resource-constrained host instances (1GB–2GB RAM / 1–2 vCPUs).
 
 ---
 
 ## 1. When to Activate This Skill
 
 Activate this skill whenever:
-- User asks to optimize, speed up, or troubleshoot slow Next.js builds, Docker container creation, or GitHub Actions CI/CD workflows.
-- Next.js Docker builds take longer than 2 minutes.
+- User asks to optimize, speed up, or troubleshoot slow Next.js 16/15 builds, Docker container creation, or GitHub Actions CI/CD workflows.
+- Next.js Turbopack or Docker builds take longer than 2 minutes.
 - GitHub Actions runners exceed job timeout limits or consume excessive build minutes.
 - Production containers trigger false `unhealthy` healthcheck timeouts on low-CPU / low-RAM VMs (e.g. AWS EC2 t3/t4g, Oracle Cloud OCI micro/ampere instances).
 - Deployments cause memory thrashing, high swap usage, or 502 Bad Gateway outages during container rollouts.
@@ -24,7 +24,7 @@ Activate this skill whenever:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        Next.js Optimized CI/CD Pipeline                │
+│                   Next.js 16 Optimized CI/CD Pipeline                  │
 └────────────────────────────────────────────────────────────────────────┘
                                      │
     ┌────────────────────────────────┼────────────────────────────────┐
@@ -32,14 +32,14 @@ Activate this skill whenever:
 [1. Strict Context]          [2. Dual Layer Cache]         [3. BuildKit Mounts]
 .dockerignore excludes:      GitHub Actions: type=gha      npm: /root/.npm
 - .next, node_modules        Registry: :buildcache         Next.js: /app/.next/cache
-- .git, .vercel, *.tsbuild   (reused across runners)       (incremental page build)
-Context: ~300MB → <5MB       Cache pull: ~15s              Build time: 4m → ~45s
+- .git, .vercel, *.tsbuild   (reused across runners)       (Turbopack graph cache)
+Context: ~300MB → <5MB       Cache pull: ~15s              Build time: 4m → ~25s
     │                                │                                │
     └────────────────────────────────┼────────────────────────────────┘
                                      ▼
                      [4. Multi-Stage Dockerfile]
                      - deps: package*.json with npm ci
-                     - builder: standalone next build
+                     - builder: Next.js 16 standalone build
                      - runner: node:22-alpine non-root
                      - Debloat: strip npm, npx, yarn (~25MB)
                      - Runtime footprint: ~85MB
@@ -63,7 +63,19 @@ Context: ~300MB → <5MB       Cache pull: ~15s              Build time: 4m → 
 
 ---
 
-## 3. The 7 Pillars of Sub-90s Next.js CI/CD
+## 3. Next.js 16 & Turbopack Highlights
+
+Next.js 16 features **Turbopack as default** along with **Turbopack File System Caching**:
+1. **Incremental Compilation Preservation**:
+   Mounting `/app/.next/cache` via BuildKit (`--mount=type=cache,id=nextjs,target=/app/.next/cache`) persists Turbopack's disk cache across builds, slashing page compilation to seconds.
+2. **React 19 & Compiler Optimization**:
+   Full support for React 19's memoizing React Compiler without runtime Babel overhead.
+3. **Node.js 22 LTS Runtime**:
+   Leverages modern V8 JIT performance, native fetch, and web standards.
+
+---
+
+## 4. The 7 Pillars of Sub-90s Next.js CI/CD
 
 ### Pillar 1: Strict `.dockerignore` (Context Reduction)
 Passing build context to the Docker daemon often wastes 30–60 seconds uploading `.next`, `node_modules`, or Git history.
@@ -97,7 +109,7 @@ Reinstalling npm packages and recompiling all Next.js pages from scratch on ever
   RUN --mount=type=cache,id=npm,target=/root/.npm \
       npm ci --prefer-offline --no-audit --maxsockets 7
 
-  # Cached incremental Next.js compilation
+  # Cached incremental Next.js 16 Turbopack compilation
   RUN --mount=type=cache,id=nextjs,target=/app/.next/cache \
       npm run build
   ```
@@ -147,9 +159,9 @@ Running two Next.js instances simultaneously on a 1GB host causes Out-Of-Memory 
 
 ---
 
-## 4. Production Golden Templates
+## 5. Production Golden Templates
 
-### 4.1 Production Multi-Stage `Dockerfile`
+### 5.1 Production Multi-Stage `Dockerfile`
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7-labs
@@ -167,7 +179,7 @@ RUN --mount=type=cache,id=npm,target=/root/.npm \
     npm ci --prefer-offline --no-audit --maxsockets 7
 
 # -------------------------------------------------------------
-# Stage 2: Builder with Next.js Compiler Cache
+# Stage 2: Builder with Next.js 16 Turbopack Cache
 # -------------------------------------------------------------
 FROM base AS builder
 WORKDIR /app
@@ -179,7 +191,7 @@ RUN --mount=type=cache,id=nextjs,target=/app/.next/cache \
     npm run build
 
 # -------------------------------------------------------------
-# Stage 3: Minimal Production Runner (Debloated)
+# Stage 3: Minimal Production Runner (Debloated ~85MB)
 # -------------------------------------------------------------
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -205,7 +217,7 @@ USER nextjs
 EXPOSE 3000
 
 # Fast lightweight busybox healthcheck (<2ms)
-HEALTHCHECK --interval=5s --timeout=3s --retries=3 --start-period=3s \
+HEALTHCHECK --interval=3s --timeout=3s --retries=3 --start-period=2s \
   CMD wget -qO- http://127.0.0.1:3000/api/health || exit 1
 
 CMD ["node", "server.js"]
@@ -213,7 +225,7 @@ CMD ["node", "server.js"]
 
 ---
 
-### 4.2 `next.config.ts` / `next.config.js` Standalone Settings
+### 5.2 `next.config.ts` Settings for Next.js 16 + React 19
 
 ```typescript
 import type { NextConfig } from "next";
@@ -231,6 +243,11 @@ const nextConfig: NextConfig = {
   // React Strict Mode for predictable hydration
   reactStrictMode: true,
 
+  // Next.js 16 + React 19 Compiler support
+  experimental: {
+    reactCompiler: true,
+  },
+
   // Optimize production image caching
   images: {
     formats: ["image/avif", "image/webp"],
@@ -240,134 +257,3 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 ```
-
----
-
-### 4.3 High-Speed GitHub Actions Workflow (`.github/workflows/deploy.yml`)
-
-```yaml
-name: Optimized Next.js Build & Deploy
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-concurrency:
-  group: deploy-nextjs-prod
-  cancel-in-progress: false
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          version: latest
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and Push Docker Image with Dual Cache
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: |
-            type=gha
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: |
-            type=gha,mode=max
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max,image-manifest=true
-
-      - name: Deploy to Production VM via SSH
-        uses: appleboy/ssh-action@v1.2.5
-        env:
-          GHCR_PAT: ${{ secrets.GITHUB_TOKEN }}
-          GH_ACTOR: ${{ github.actor }}
-          DEPLOY_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT,GH_ACTOR,DEPLOY_IMAGE
-          script: |
-            set -euo pipefail
-            echo "$GHCR_PAT" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
-            docker pull -q "$DEPLOY_IMAGE"
-
-            OLD_IMAGE=$(docker inspect nextjs-app --format '{{.Config.Image}}' 2>/dev/null || true)
-
-            # Fast stop previous container (prevents swap thrashing on low RAM instances)
-            docker stop -t 3 nextjs-app >/dev/null 2>&1 || true
-            docker rm nextjs-app >/dev/null 2>&1 || true
-
-            # Persistent compiler cache on host
-            mkdir -p /opt/nextjs/cache && chmod 777 /opt/nextjs/cache
-
-            # Launch new container with memory guards and busybox healthcheck
-            docker run -d --name nextjs-app --restart unless-stopped \
-              -p 0.0.0.0:3000:3000 \
-              --init --stop-timeout 5 \
-              -v /opt/nextjs/cache:/app/.next/cache \
-              --health-cmd "wget -qO- http://127.0.0.1:3000/api/health || exit 1" \
-              --health-interval 3s --health-timeout 3s --health-retries 3 --health-start-period 2s \
-              -m 512M --cpus 1.0 --pids-limit 128 --security-opt no-new-privileges \
-              -e NODE_OPTIONS=--max-old-space-size=384 "$DEPLOY_IMAGE"
-
-            # Fast 0.5s health polling
-            for attempt in $(seq 1 12); do
-              if curl -sSf http://127.0.0.1:3000/api/health >/dev/null 2>&1; then
-                break
-              fi
-              sleep 0.5
-            done
-
-            if ! curl -sSf http://127.0.0.1:3000/api/health >/dev/null 2>&1; then
-              echo "Health check failed. Rolling back immediately."
-              docker logs nextjs-app
-              docker rm -f nextjs-app
-              [ -n "$OLD_IMAGE" ] && docker run -d --name nextjs-app --restart unless-stopped -p 0.0.0.0:3000:3000 "$OLD_IMAGE"
-              exit 1
-            fi
-
-            # Background non-blocking image prune
-            (docker image prune -f >/dev/null 2>&1 &)
-            echo "Deployment completed successfully in record time!"
-```
-
----
-
-## 5. Optimization Audit Checklist
-
-Before approving any Next.js CI/CD configuration, verify:
-- [ ] **Context size < 10MB**: Verified via `docker build --progress=plain` context transfer output.
-- [ ] **`output: "standalone"` enabled**: Found in `next.config.*`.
-- [ ] **BuildKit cache mounts applied**: Both `--mount=type=cache,id=npm` and `--mount=type=cache,id=nextjs` exist.
-- [ ] **Dual Cache Configured**: Both GitHub Actions and Registry (`:buildcache`) caching are active.
-- [ ] **Debloated Runner Stage**: Package managers stripped (`npm`, `yarn`, `corepack` deleted).
-- [ ] **Zero-Node Healthcheck**: Busybox `wget` used instead of `node -e fetch(...)`.
-- [ ] **Single Consolidated Job**: Build and deploy run in a unified workflow job.
-- [ ] **Automated Rollback Active**: Host captures `$OLD_IMAGE` and rolls back on failure.
