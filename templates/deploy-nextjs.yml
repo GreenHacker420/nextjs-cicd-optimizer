@@ -1,4 +1,4 @@
-name: Optimized Next.js Build & Deploy
+name: Optimized Next.js 16 Build & Deploy
 
 on:
   push:
@@ -44,6 +44,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          # Provenance false ensures clean single OCI manifest for fast VPS pulling
+          provenance: false
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

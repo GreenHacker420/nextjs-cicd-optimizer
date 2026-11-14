@@ -1,11 +1,17 @@
 ---
 name: nextjs-cicd-optimizer
-description: Optimizes Next.js 16 & 15 CI/CD pipelines, Docker container builds, and deployment workflows to achieve under 90-second build and release cycles. Applies Turbopack disk caching, BuildKit cache mounts, GHCR registry layer caching, standalone output packaging, lightweight zero-node health checks, and swap-safe zero-downtime container rollouts.
+description: Optimizes Next.js 16 & 15 CI/CD pipelines, Docker container builds, and deployment workflows to achieve under 90-second build and release cycles. Applies Turbopack disk caching, BuildKit cache mounts, GHCR registry layer caching, standalone output packaging, lightweight zero-node health checks, and swap-safe zero-downtime container rollouts across npm, pnpm, and Bun.
 ---
 
-# Next.js 16 & 15 CI/CD Speed & Docker Build Optimizer
+# Next.js 16 Modern Stack CI/CD Speed & Docker Build Optimizer
 
-A comprehensive agent guide and production standard for slashing Next.js 16 and 15 CI/CD build and deployment times from **6–10 minutes down to under 90 seconds** while ensuring 100% stability on resource-constrained host instances (1GB–2GB RAM / 1–2 vCPUs).
+A comprehensive agent guide and production standard for slashing Next.js 16 and 15 CI/CD build and deployment times from **6–10 minutes down to under 90 seconds** while supporting the latest ecosystem stack:
+- **Next.js 16** (Turbopack Default, Cache Components, Partial Pre-Rendering, `proxy.ts`)
+- **React 19** (Server Components, Server Actions, React Compiler)
+- **Tailwind CSS v4** (CSS-first `@import "tailwindcss";`, Oxidized Engine)
+- **TypeScript 5.8+** (Strict ESM, `verbatimModuleSyntax`, `isolatedDeclarations`)
+- **Node.js 22 LTS / Bun 1.2+ / pnpm v10**
+- **Docker BuildKit 1.8+ & Buildx v3** (GHCR Dual Layer Cache, OCI Manifests)
 
 ---
 
@@ -14,68 +20,30 @@ A comprehensive agent guide and production standard for slashing Next.js 16 and 
 Activate this skill whenever:
 - User asks to optimize, speed up, or troubleshoot slow Next.js 16/15 builds, Docker container creation, or GitHub Actions CI/CD workflows.
 - Next.js Turbopack or Docker builds take longer than 2 minutes.
+- Modern package managers (`pnpm`, `bun`, or `npm`) need Docker BuildKit store caching configured.
 - GitHub Actions runners exceed job timeout limits or consume excessive build minutes.
 - Production containers trigger false `unhealthy` healthcheck timeouts on low-CPU / low-RAM VMs (e.g. AWS EC2 t3/t4g, Oracle Cloud OCI micro/ampere instances).
 - Deployments cause memory thrashing, high swap usage, or 502 Bad Gateway outages during container rollouts.
 
 ---
 
-## 2. Core Optimization Architecture
+## 2. The Latest Stack Blueprint (2026)
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                   Next.js 16 Optimized CI/CD Pipeline                  │
-└────────────────────────────────────────────────────────────────────────┘
-                                     │
-    ┌────────────────────────────────┼────────────────────────────────┐
-    ▼                                ▼                                ▼
-[1. Strict Context]          [2. Dual Layer Cache]         [3. BuildKit Mounts]
-.dockerignore excludes:      GitHub Actions: type=gha      npm: /root/.npm
-- .next, node_modules        Registry: :buildcache         Next.js: /app/.next/cache
-- .git, .vercel, *.tsbuild   (reused across runners)       (Turbopack graph cache)
-Context: ~300MB → <5MB       Cache pull: ~15s              Build time: 4m → ~25s
-    │                                │                                │
-    └────────────────────────────────┼────────────────────────────────┘
-                                     ▼
-                     [4. Multi-Stage Dockerfile]
-                     - deps: package*.json with npm ci
-                     - builder: Next.js 16 standalone build
-                     - runner: node:22-alpine non-root
-                     - Debloat: strip npm, npx, yarn (~25MB)
-                     - Runtime footprint: ~85MB
-                                     │
-                                     ▼
-                     [5. Consolidated Pipeline Job]
-                     Single GitHub Actions job eliminates:
-                     - Second runner queue wait (~30s)
-                     - Artifact upload/download roundtrip (~25s)
-                                     │
-                                     ▼
-                     [6. Swap-Safe VM Rollout]
-                     - Target: 1GB-2GB RAM VPS / Bare-Metal
-                     - Fast graceful stop: docker stop -t 3
-                     - Host cache mount: /opt/cache:/app/.next/cache
-                     - Zero-Node healthcheck: busybox wget (<2ms)
-                     - Health poll: 0.5s intervals (ready in ~1.5s)
-                     - Automated instant rollback on failure ($OLD_IMAGE)
-                     - Background async prune: docker image prune -f &
-```
+| Layer | Modern 2026 Standard | Key CI/CD & Build Advantage |
+| :--- | :--- | :--- |
+| **Framework** | **Next.js 16** | Turbopack is default; disk caching in `.next/cache` cuts rebuilds to <25s. |
+| **UI Engine** | **React 19 + React Compiler** | Automatic memoization with `experimental.reactCompiler: true`. |
+| **Styling** | **Tailwind CSS v4** | `@import "tailwindcss";` without heavy `postcss.config.js` or `tailwind.config.js`. |
+| **Language** | **TypeScript 5.8+** | Fast incremental type checking, `isolatedDeclarations`. |
+| **Runtimes** | **Node.js 22 LTS / Bun 1.2+** | Native fetch, web streams, high-performance V8 engine. |
+| **Package Mgr** | **pnpm v10 / bun / npm 11** | BuildKit cache mounts tailored for each store (`/pnpm/store`, `/root/.bun`, `/root/.npm`). |
+| **Edge Proxy** | **`proxy.ts`** | Modern edge routing boundary replacing legacy middleware. |
+| **Observability**| **`instrumentation.ts`** | Native OpenTelemetry runtime diagnostics. |
+| **OCI Engine** | **Docker BuildKit 1.8+** | Dual cache (`type=gha` + `type=registry,ref=...:buildcache,mode=max`). |
 
 ---
 
-## 3. Next.js 16 & Turbopack Highlights
-
-Next.js 16 features **Turbopack as default** along with **Turbopack File System Caching**:
-1. **Incremental Compilation Preservation**:
-   Mounting `/app/.next/cache` via BuildKit (`--mount=type=cache,id=nextjs,target=/app/.next/cache`) persists Turbopack's disk cache across builds, slashing page compilation to seconds.
-2. **React 19 & Compiler Optimization**:
-   Full support for React 19's memoizing React Compiler without runtime Babel overhead.
-3. **Node.js 22 LTS Runtime**:
-   Leverages modern V8 JIT performance, native fetch, and web standards.
-
----
-
-## 4. The 7 Pillars of Sub-90s Next.js CI/CD
+## 3. The 7 Pillars of Sub-90s Next.js CI/CD
 
 ### Pillar 1: Strict `.dockerignore` (Context Reduction)
 Passing build context to the Docker daemon often wastes 30–60 seconds uploading `.next`, `node_modules`, or Git history.
@@ -102,21 +70,16 @@ Passing build context to the Docker daemon often wastes 30–60 seconds uploadin
   ```
 
 ### Pillar 2: BuildKit Cache Mounts inside Dockerfile
-Reinstalling npm packages and recompiling all Next.js pages from scratch on every commit wastes minutes.
-- **Rule**: Use BuildKit cache mounts for both the package manager and the Next.js compiler:
-  ```dockerfile
-  # Cached dependency installation
-  RUN --mount=type=cache,id=npm,target=/root/.npm \
-      npm ci --prefer-offline --no-audit --maxsockets 7
-
-  # Cached incremental Next.js 16 Turbopack compilation
-  RUN --mount=type=cache,id=nextjs,target=/app/.next/cache \
-      npm run build
-  ```
+Reinstalling dependencies and recompiling all Next.js pages from scratch on every commit wastes minutes.
+- **Rule**: Use BuildKit cache mounts for both the package manager store and the Next.js Turbopack compiler:
+  - **npm**: `--mount=type=cache,id=npm,target=/root/.npm`
+  - **pnpm**: `--mount=type=cache,id=pnpm,target=/pnpm/store`
+  - **bun**: `--mount=type=cache,id=bun,target=/root/.bun/install/cache`
+  - **Next.js Turbopack**: `--mount=type=cache,id=nextjs,target=/app/.next/cache`
 
 ### Pillar 3: Dual Buildx Cache (GHA + Container Registry)
 GitHub Actions cache (`type=gha`) is scoped to repository branches and frequently evicts large layers.
-- **Rule**: Combine `type=gha,mode=max` with an external container registry cache tag (`:buildcache`) on GHCR or Docker Hub:
+- **Rule**: Combine `type=gha,mode=max` with an external container registry cache tag (`:buildcache`) on GHCR or Docker Hub with `provenance: false`:
   ```yaml
   cache-from: |
     type=gha
@@ -127,8 +90,8 @@ GitHub Actions cache (`type=gha`) is scoped to repository branches and frequentl
   ```
 
 ### Pillar 4: Next.js Standalone Mode & Runtime Debloating
-Next.js `output: "standalone"` automatically traces required node_modules, producing a self-contained server bundle that cuts image size from ~800MB to ~100MB.
-- **Rule**: Enable `output: "standalone"` in `next.config.ts` / `next.config.js`.
+Next.js `output: "standalone"` automatically traces required node_modules, producing a self-contained server bundle that cuts image size from ~800MB to ~85MB.
+- **Rule**: Enable `output: "standalone"` in `next.config.ts`.
 - **Debloating**: In the final `runner` stage, remove unnecessary package manager binaries shipped with the base Node.js Alpine image:
   ```dockerfile
   # Shed ~25MB of dead package manager weight from production image
@@ -159,101 +122,13 @@ Running two Next.js instances simultaneously on a 1GB host causes Out-Of-Memory 
 
 ---
 
-## 5. Production Golden Templates
+## 4. Multi-Package Manager Docker Templates
 
-### 5.1 Production Multi-Stage `Dockerfile`
+### 4.1 `Dockerfile` (npm)
+See [templates/Dockerfile](file:///Users/harsh/Desktop/gitRepos/nextjs-cicd-optimizer/templates/Dockerfile).
 
-```dockerfile
-# syntax=docker/dockerfile:1.7-labs
-FROM node:22-alpine AS base
-ENV NODE_ENV=production
-WORKDIR /app
+### 4.2 `Dockerfile.pnpm` (pnpm v10)
+See [templates/Dockerfile.pnpm](file:///Users/harsh/Desktop/gitRepos/nextjs-cicd-optimizer/templates/Dockerfile.pnpm).
 
-# -------------------------------------------------------------
-# Stage 1: Dependencies with BuildKit NPM Cache
-# -------------------------------------------------------------
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
-COPY package.json package-lock.json ./
-RUN --mount=type=cache,id=npm,target=/root/.npm \
-    npm ci --prefer-offline --no-audit --maxsockets 7
-
-# -------------------------------------------------------------
-# Stage 2: Builder with Next.js 16 Turbopack Cache
-# -------------------------------------------------------------
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN --mount=type=cache,id=nextjs,target=/app/.next/cache \
-    npm run build
-
-# -------------------------------------------------------------
-# Stage 3: Minimal Production Runner (Debloated ~85MB)
-# -------------------------------------------------------------
-FROM node:22-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
-
-# Security: Non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
-# Strip dead package manager binaries from production image (~25MB saved)
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn*
-
-# Copy standalone build and public static assets
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-EXPOSE 3000
-
-# Fast lightweight busybox healthcheck (<2ms)
-HEALTHCHECK --interval=3s --timeout=3s --retries=3 --start-period=2s \
-  CMD wget -qO- http://127.0.0.1:3000/api/health || exit 1
-
-CMD ["node", "server.js"]
-```
-
----
-
-### 5.2 `next.config.ts` Settings for Next.js 16 + React 19
-
-```typescript
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  // Required: Generates minimal standalone server.js bundle
-  output: "standalone",
-
-  // Performance: Enable gzip/brotli compression
-  compress: true,
-
-  // Security: Remove x-powered-by header
-  poweredByHeader: false,
-
-  // React Strict Mode for predictable hydration
-  reactStrictMode: true,
-
-  // Next.js 16 + React 19 Compiler support
-  experimental: {
-    reactCompiler: true,
-  },
-
-  // Optimize production image caching
-  images: {
-    formats: ["image/avif", "image/webp"],
-    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
-  },
-};
-
-export default nextConfig;
-```
+### 4.3 `Dockerfile.bun` (Bun 1.2+)
+See [templates/Dockerfile.bun](file:///Users/harsh/Desktop/gitRepos/nextjs-cicd-optimizer/templates/Dockerfile.bun).

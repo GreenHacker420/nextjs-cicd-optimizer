@@ -22,8 +22,14 @@ jobs:
         run: |
           test -f skills/nextjs-cicd-optimizer/SKILL.md
           test -f templates/Dockerfile
+          test -f templates/Dockerfile.pnpm
+          test -f templates/Dockerfile.bun
           test -f templates/.dockerignore
+          test -f templates/next.config.ts
+          test -f templates/proxy.ts
+          test -f templates/instrumentation.ts
           test -f templates/deploy-nextjs.yml
+          test -f templates/health-check.sh
           test -f assets/logo.svg
           test -f LICENSE
-          echo "All required skill files present."
+          echo "All required latest stack templates present and validated."

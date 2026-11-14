@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Required: Generates minimal standalone server bundle
+  // Required: Generates minimal standalone server bundle for Docker
   output: "standalone",
 
   // Performance: Enables gzip & brotli compression
@@ -10,15 +10,18 @@ const nextConfig: NextConfig = {
   // Security: Removes x-powered-by header
   poweredByHeader: false,
 
-  // React Strict Mode for predictable hydration
+  // Predictable React 19 hydration
   reactStrictMode: true,
 
-  // Next.js 16 + React 19 Compiler support
+  // Next.js 16 + React 19 Cutting-Edge Compilation
   experimental: {
+    // Stable automatic React memoization without manual useMemo/useCallback
     reactCompiler: true,
+    // Partial Pre-Rendering (PPR) & Cache Components
+    ppr: "incremental",
   },
 
-  // Optimize production image caching
+  // Modern next-gen image formats
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
